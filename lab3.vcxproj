@@ -123,12 +123,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GasNetwork.cpp" />
     <ClCompile Include="Ks.cpp" />
     <ClCompile Include="lab3.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="Pipe.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GasNetwork.h" />
     <ClInclude Include="Ks.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="Pipe.h" />
