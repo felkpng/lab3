@@ -11,9 +11,8 @@ std::ostream& operator<<(std::ostream& os, const Ks& station) {
     bool toConsole = (&os == &std::cout);
 
     if (toConsole) {
-        os << "Информация о станции:\n"
-            << "Название: " << station.getName() << '\n'
-            << "Количество цехов: " << station.getWorkshopsCount() << " (" << station.getWorkshopsWorking() << " в работе)\n"
+        os << "Станция: " << station.getName() << '\n'
+            << "Цехов: " << station.getWorkshopsCount() << " (" << station.getWorkshopsWorking() << " в работе) | "
             << "Тип: " << station.getType() << "\n";
     }
     else {

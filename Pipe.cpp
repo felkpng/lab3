@@ -36,11 +36,10 @@ std::ostream& operator<<(std::ostream& os, const Pipe& truba) {
     bool toConsole = (&os == &std::cout);
 
     if (toConsole) {
-        os << "Информация о трубе:\n"
-            << "Название: " << truba.getName() << '\n'
-            << "Длина: " << truba.getLength() << '\n'
-            << "Диаметр: " << truba.getDiameter() << '\n'
-            << "В ремонте: " << (truba.isRepair() ? "Да" : "Нет") << "\n";
+        os << "Труба: " << truba.getName() << '\n'
+            << "Длина: " << truba.getLength() << " | "
+            << "Диаметр: " << truba.getDiameter() << " | "
+            << (truba.isRepair() ? "В" : "Не в") << " ремонте\n";
     }
     else {
         os << truba.getName() << '\n'

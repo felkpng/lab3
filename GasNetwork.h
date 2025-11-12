@@ -22,6 +22,9 @@ private:
 	std::vector<int> search_by_diameter(int diameter);
 	void EraseConnections_byPipe(int pipe_id);
 	void EraseConnections_byKs(int station_id);
+	void EraseConnection();
+	std::vector<std::vector<int>> TopoSort();
+	void ShowTopo();
 
 public:
 	GasNetwork();

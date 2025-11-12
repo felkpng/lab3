@@ -12,6 +12,13 @@ pipe1
 700
 0
 
+#PIPE
+2
+trubaa
+100
+1400
+0
+
 #KS
 0
 station0
@@ -26,8 +33,32 @@ station1
 2
 rr
 
+#KS
+2
+station2
+10
+2
+tr
+
+#KS
+3
+station3
+12
+0
+tt
+
 #CONNECTION
 0
 1
 0
+
+#CONNECTION
+0
+2
+2
+
+#CONNECTION
+1
+3
+1
 

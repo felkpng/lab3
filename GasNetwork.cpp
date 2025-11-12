@@ -75,6 +75,18 @@ vector<int> GasNetwork::search_by_diameter(int diameter) {
     return elements;
 }
 
+void GasNetwork::EraseConnection() {
+    cout << "\nВыберите соединение для удаления. Для этого введите номер трубы в этом соединении: ";
+    int enter = Enter<int>();
+    int x = 0;
+
+    for (Connection con : connections)
+        if (con.pipe_id == enter) {
+            connections.erase(connections.begin() + x);
+            x++;
+        }
+}
+
 void GasNetwork::EraseConnections_byPipe(int pipe_id) {
     int x = 0;
     for (Connection con : connections) {
@@ -377,7 +389,7 @@ void GasNetwork::ShowAll() {
 
     }
 
-    cout << "\nРедактировать:\n1. Трубы\n2. КС\n0. В меню\nВыбор: ";
+    cout << "\nРедактировать:\n1. Трубы\n2. КС\n3. Удалить соединение\n0. В меню\nВыбор: ";
     int choice = Enter<int>();
 
     if (choice == 1 || choice == 2) {
@@ -389,9 +401,10 @@ void GasNetwork::ShowAll() {
         if (elements.size() == 0) { return; }
         if (choice == 1) EditSelection(elements, true);
         else EditSelection(elements, false);
-
-        system("cls");
     }
+    else if (choice == 3) EraseConnection();
+
+    system("cls");
 }
 
 void GasNetwork::Search() {
@@ -462,6 +475,12 @@ void GasNetwork::LoadData() {
         std::cout << "Не удалось открыть файл " << fileName << endl;
         return;
     }
+    
+    pipes.clear();
+    stations.clear();
+    connections = {};
+    pipes_id = 0;
+    stations_id = 0;
 
     string line;
     while (getline(inFile, line)) {
@@ -522,9 +541,69 @@ void GasNetwork::LoadData() {
     cout << "Данные успешно загружены!\n";
 }
 
+vector<vector<int>> GasNetwork::TopoSort() {
+    vector<vector<int>> topoList = {};
+
+    map<int, int> inCounts;
+    for (const auto& pair : stations)
+        inCounts[pair.first] = 0;
+    
+    for (Connection con : connections)
+        inCounts[con.stop_id]++;
+    
+    vector<int> current_level;
+    vector<int> to_delete;
+    vector<int> to_decrease;
+    while (!inCounts.empty()) {
+        current_level = {};
+        to_delete = {};
+        to_decrease = {};
+        for (const auto& pair : inCounts) {
+            if (pair.second == 0) {
+                for (Connection con : connections)
+                    if (con.start_id == pair.first)
+                        to_decrease.push_back(con.stop_id);
+
+                current_level.push_back(pair.first);
+                to_delete.push_back(pair.first);
+            }
+        }
+
+        for (int x : to_decrease)
+            inCounts[x]--;
+
+        for (int x : to_delete)
+            inCounts.erase(x);
+
+        if (current_level.empty()) return { {-1} };
+        topoList.push_back(current_level);
+    }
+
+    return topoList;
+}
+
+void GasNetwork::ShowTopo() {
+    vector<vector<int>> topoList = TopoSort();
+
+    if (topoList.empty()) cout << "У вас нет КС!";
+    else if (topoList[0][0] == -1) cout << "Сортировка невозможна граф имеет цикл!";
+    else {
+        cout << "Топологическая сортировка графа\n";
+        for (vector<int> s : topoList) {
+            cout << "[ ";
+
+            for (int elem : s)
+                cout << elem << " ";
+
+            cout << "]\n";
+        }
+    }
+
+}
+
 void GasNetwork::NetMenu() {
     while (true) {
-        cout << "Меню:\n1. Добавить трубу\n2. Добавить КС\n3. Просмотр всех объектов\n4. Поиск\n5. Соединить КС\n6. Сохранить\n7. Загрузить\n0. Выход\nВыбор: ";
+        cout << "Меню:\n1. Добавить трубу\n2. Добавить КС\n3. Просмотр всех объектов\n4. Поиск\n5. Соединить КС\n6. Сохранить\n7. Загрузить\n8. Топологическая сортировка\n0. Выход\nВыбор: ";
 
         int choice = Enter<int>();
         switch (choice) {
@@ -548,6 +627,9 @@ void GasNetwork::NetMenu() {
             break;
         case 7:
             LoadData();
+            break;
+        case 8:
+            ShowTopo();
             break;
         case 0:
             exit(0);
