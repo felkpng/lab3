@@ -6,6 +6,7 @@ class Pipe {
 public:
 	Pipe();
 	Pipe(std::string name, float length, int diameter, bool repair);
+	void with_diameter(int d);
 
 	std::string getName() const { return name; }
 	float getLength() const { return length; }

@@ -1,11 +1,9 @@
 ﻿#include "GasNetwork.h"
 
-using namespace std;
-
 int main()
 {
     GasNetwork gs;
-    setlocale(LC_ALL, "rus");
-    gs.Menu();
+    std::setlocale(LC_ALL, "rus");
+    gs.NetMenu();
     return 0;
 }

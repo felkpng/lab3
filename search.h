@@ -17,14 +17,22 @@ vector<int> SearchByName(map<int, Pipe>& pipes, map<int, Ks>& stations) {
 	vector<int> elements = {};
 	for (const auto& pair : pipes) {
 		string name = pair.second.getName();
-		if (name.find(enter) != string::npos)
+		if (name.find(enter) != string::npos) {
 			elements.push_back(pair.first);
+
+			cout << "ID: " << pair.first << endl;
+			cout << pair.second << endl;
+		}
 	}
 
 	for (const auto& pair : stations) {
 		string name = pair.second.getName();
-		if (name.find(enter) != string::npos)
+		if (name.find(enter) != string::npos) {
 			elements.push_back(pair.first);
+
+			cout << "ID: " << pair.first << endl;
+			cout << pair.second << endl;
+		}
 	}
 
 	return elements;

@@ -8,6 +8,30 @@
 Pipe::Pipe() : name(""), length(0.0f), diameter(0), repair(false) {}
 Pipe::Pipe(std::string name, float length, int diameter, bool repair) : name(name), length(length), diameter(diameter), repair(repair) {}
 
+void Pipe::with_diameter(int d) {
+    std::cout << "\nСоздание трубы\n";
+
+    std::cout << "Название: ";
+    std::string n;
+    std::getline(std::cin >> std::ws, n);
+
+    std::cout << "Длина: ";
+    float l = Enter<float>();
+    while (l <= 0) {
+        std::cout << "Длина должна превышать 0\nПовторите ввод: ";
+        l = Enter<float>();
+    }
+
+    std::cout << "Диаметр: " << d << std::endl;
+
+    std::cout << "В ремонте (0/1): 0";
+
+    setName(n);
+    setLength(l);
+    setDiameter(d);
+    setRepair(false);
+}
+
 std::ostream& operator<<(std::ostream& os, const Pipe& truba) {
     bool toConsole = (&os == &std::cout);
 
@@ -45,10 +69,10 @@ std::istream& operator>>(std::istream& is, Pipe& truba) {
             l = Enter<float>();
         }
 
-        std::cout << "Диаметр: ";
+        std::cout << "Диаметр (500, 700, 1000, 1400 мм): ";
         int d = Enter<int>();
-        while (d <= 0) {
-            std::cout << "Диаметр должен превышать 0\nПовторите ввод: ";
+        while (d != 500 && d != 700 && d != 1000 && d != 1400) {
+            std::cout << "Допустимые диаметры: 500, 700, 1000, 1400\nПовторите ввод: ";
             d = Enter<int>();
         }
 

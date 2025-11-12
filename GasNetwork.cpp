@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -7,6 +8,7 @@
 #include <map>
 
 #include "GasNetwork.h"
+#include "Connection.h"
 #include "Pipe.h"
 #include "Ks.h"
 #include "temp.h"
@@ -31,8 +33,65 @@ vector<int> Selections(const std::string& enter) {
     return elements;
 }
 
+template<typename T>
+vector<int> IdList(map<int, T> m) {
+    vector<int> keys;
+
+    for (const auto& pair : m) {
+        keys.push_back(pair.first);
+    }
+
+    return keys;
+}
+
+bool is_element(vector<int> vec, int n) {
+    for (int m : vec) 
+        if (m == n) return true;
+    return false;
+}
+
 GasNetwork::GasNetwork() : name(""), pipes({}), stations({}), pipes_id(0), stations_id(0) {}
-GasNetwork::GasNetwork(std::string name, std::map<int, Pipe> pipes, std::map<int, Ks> stations, int pipes_id, int stations_id) : name(name), pipes(pipes), stations(stations), pipes_id(pipes_id), stations_id(stations_id) {}
+
+bool GasNetwork::can_be_paired(int start_id, int stop_id) {
+    if (start_id == stop_id) return false;
+    for (Connection con : connections)
+        if ((con.start_id == start_id && con.stop_id == stop_id) || (con.start_id == stop_id && con.stop_id == start_id)) return false;
+    return true;
+}
+
+bool GasNetwork::can_be_pipe(int pipe_id) {
+    for (Connection con : connections)
+        if (con.pipe_id == pipe_id) return false;
+    return true;
+}
+
+vector<int> GasNetwork::search_by_diameter(int diameter) {
+
+    vector<int> elements = {};
+    for (const auto& pair : pipes) {
+        if (pair.second.getDiameter() == diameter && !pair.second.isRepair() && can_be_pipe(pair.first))
+            elements.push_back(pair.first);
+    }
+    return elements;
+}
+
+void GasNetwork::EraseConnections_byPipe(int pipe_id) {
+    int x = 0;
+    for (Connection con : connections) {
+        if (con.pipe_id == pipe_id)
+            connections.erase(connections.begin() + x);
+        else { x++; }
+    }     
+}
+
+void GasNetwork::EraseConnections_byKs(int station_id) {
+    int x = 0;
+    for (Connection con : connections) {
+        if (con.start_id == station_id || con.stop_id == station_id)
+            connections.erase(connections.begin() + x);
+        else { x++; }
+    }
+}
 
 void GasNetwork::NewPipe() {
     Pipe newPipe;
@@ -50,6 +109,81 @@ void GasNetwork::NewKs() {
 
     stations[stations_id] = newKs;
     stations_id++;
+
+    system("cls");
+}
+
+void GasNetwork::NewConnection() {
+    int start_id = -2;
+    bool no_exit = true;
+    vector<int> station_ids = IdList(stations);
+
+    cout << "(-1 для выхода в меню)\n";
+    while (no_exit) {
+        cout << "Введите ID КС входа: ";
+        start_id = Enter<int>();
+
+        if (start_id == -1) { no_exit = false; }
+        if (is_element(station_ids, start_id) || !no_exit) break;
+        cout << "Ошибка! Попробуйте еще\n";
+    }
+
+    int stop_id = -2;
+    while (no_exit) {
+        cout << "Введите ID КС выхода: ";
+        stop_id = Enter<int>();
+
+        if (stop_id == -1) { no_exit = false; }
+        if ((is_element(station_ids, stop_id) && can_be_paired(start_id, stop_id)) || !no_exit) break;
+        cout << "Ошибка! Попробуйте еще\n";
+    }
+
+    int diameter = 0;
+    while (no_exit) {
+        cout << "Диаметр трубы: ";
+        diameter = Enter<int>();
+
+        if (diameter == -1) { no_exit = false; }
+        if (diameter == 500 || diameter == 700 || diameter == 1000 || diameter == 1400 || !no_exit) break;
+        cout << "Некорректный ввод!\n";
+    }
+
+    int pipe_id = -2;
+    if (no_exit) {
+        vector<int> pipe_ids = search_by_diameter(diameter);
+
+        if (pipe_ids.size() == 0) {
+            cout << "Нет подходящей трубы. Переходим к созданию\n";
+            
+            Pipe newPipe;
+            newPipe.with_diameter(diameter);
+
+            pipes[pipes_id] = newPipe;
+            pipe_id = pipes_id;
+            pipes_id++;
+        }
+        else {
+            cout << "\nПодходящие трубы:\n";
+
+            for (const auto& pair : pipes) {
+                if (is_element(pipe_ids, pair.first)) {
+                    cout << "ID: " << pair.first << endl;
+                    cout << pair.second << endl;
+                }
+            }
+
+            while (true) {
+                cout << "Выбор трубы: ";
+                pipe_id = Enter<int>();
+
+                if (is_element(pipe_ids, pipe_id)) break;
+                cout << "Некорректный ввод!" << endl;
+            }
+        }
+
+        Connection newConnection(start_id, stop_id, pipe_id);
+        connections.push_back(newConnection);
+    }
 
     system("cls");
 }
@@ -100,8 +234,10 @@ void GasNetwork::EditPipes(vector<int> selectedPipes) {
             pipes[x].setRepair(r);
         break;
     case 5:
-        for (const auto& x : selectedPipes)
+        for (const auto& x : selectedPipes) {
+            EraseConnections_byPipe(x);
             pipes.erase(x);
+        }
         break;
     case 6:
         break;
@@ -164,35 +300,12 @@ void GasNetwork::EditStations(vector<int> selectedStations) {
             stations[x].setType(n);
         break;
     case 5:
-        for (const auto& x : selectedStations)
+        for (const auto& x : selectedStations) {
+            EraseConnections_byKs(x);
             stations.erase(x);
+        }
         break;
     case 6:
-        break;
-    }
-}
-
-void GasNetwork::EditDifferent(vector<int> selectedPipes, vector<int> selectedStations) {
-    cout << "\nДействия\n1. Изменить имя\n2. Удалить\n0. Назад в меню\nВыбор: ";
-
-    int choice = Enter<int>();
-    string n;
-
-    switch (choice) {
-    case 1:
-        cout << "Новое имя: ";
-        n = Enter<string>();
-        for (const auto& x : selectedPipes)
-            pipes[x].setName(n);
-        for (const auto& x : selectedStations)
-            stations[x].setName(n);
-        break;
-    case 2:
-        for (const auto& x : selectedPipes)
-            pipes.erase(x);
-        for (const auto& x : selectedStations)
-            stations.erase(x);
-    case 0:
         break;
     }
 }
@@ -220,21 +333,25 @@ void GasNetwork::SelectionToGroups(vector<int>& elements, vector<int>& selectedP
     }
 }
 
-void GasNetwork::EditSelection(vector<int> elements) {
-    vector<int> selectedPipes = {};
-    vector<int> selectedStations = {};
+void GasNetwork::EditSelection(vector<int> elements, bool isPipes) {
+    if (isPipes) {
+        for (int elem : elements) {
+            cout << "ID: " << elem << endl;
+            cout << pipes[elem];
+            cout << endl;
+        }
 
-    SelectionToGroups(elements, selectedPipes, selectedStations);
-
-    if (selectedPipes.size() == 0 && selectedStations.size() == 0) return;
-    else if (selectedPipes.size() == 0 || selectedStations.size() == 0) {
-        if (selectedPipes.size() > 0)
-            EditPipes(selectedPipes);
-        else
-            EditStations(selectedStations);
+        EditPipes(elements);
     }
-    else
-        EditDifferent(selectedPipes, selectedStations);
+    else {
+        for (int elem : elements) {
+            cout << "ID: " << elem << endl;
+            cout << stations[elem];
+            cout << endl;
+        }
+
+        EditStations(elements);
+    }
 
     system("cls");
     cout << "Операция выполнена!" << endl;
@@ -254,13 +371,27 @@ void GasNetwork::ShowAll() {
         cout << endl;
     }
 
-    cout << "Выберите элементы через пробел или нажмите Enter, чтобы вернуться в меню:\n";
-    string enter;
-    enter = LoggedInput();
+    cout << "Соединения:" << endl;
+    for (Connection con : connections) {
+        cout << con.start_id << " -> " << con.stop_id << " (труба " << con.pipe_id << ")" << endl;
 
-    vector<int> elements = Selections(enter);
-    if (elements.size() == 0) { return; }
-    else { EditSelection(elements); }
+    }
+
+    cout << "\nРедактировать:\n1. Трубы\n2. КС\n0. В меню\nВыбор: ";
+    int choice = Enter<int>();
+
+    if (choice == 1 || choice == 2) {
+        cout << "Выберите элементы через пробел: ";
+        string enter;
+        enter = LoggedInput();
+
+        vector<int> elements = Selections(enter);
+        if (elements.size() == 0) { return; }
+        if (choice == 1) EditSelection(elements, true);
+        else EditSelection(elements, false);
+
+        system("cls");
+    }
 }
 
 void GasNetwork::Search() {
@@ -281,12 +412,11 @@ void GasNetwork::Search() {
         elements = SearchByWorkshops(stations);
         break;
     };
-    system("cls");
 
     if (elements.size() == 0)
         cout << "Не найдено элементов по заданным параметрам" << endl;
-    else {
-        EditSelection(elements);
+    else if (enter != 1) {
+        EditSelection(elements, (enter == 2));
     }
 }
 
@@ -306,6 +436,11 @@ void GasNetwork::SaveData() {
             outFile << "#KS" << endl;
             outFile << pair.first << endl;
             outFile << stations[pair.first] << endl;
+        }
+
+        for (Connection con : connections) {
+            outFile << "#CONNECTION" << endl;
+            outFile << con << endl;
         }
 
         outFile.close();
@@ -363,15 +498,33 @@ void GasNetwork::LoadData() {
             stations[id] = Ks(name, workshops_count, workshops_working, type);
             if (id >= stations_id) stations_id = id + 1;
         }
+
+        else if (line == "#CONNECTION") {
+            int start_id;
+            int stop_id;
+            int pipe_id;
+
+            if (!(inFile >> start_id)) { cout << "Ошибка start_id\n"; return; }
+            inFile.ignore();
+
+            if (!(inFile >> stop_id)) { cout << "Ошибка stop_id\n"; return; }
+            inFile.ignore();
+
+            if (!(inFile >> pipe_id)) { cout << "Ошибка pipe_id\n"; return; }
+            inFile.ignore();
+
+            Connection newConnection(start_id, stop_id, pipe_id);
+            connections.push_back(newConnection);
+        }
     }
 
     system("cls");
     cout << "Данные успешно загружены!\n";
 }
 
-void GasNetwork::Menu() {
+void GasNetwork::NetMenu() {
     while (true) {
-        cout << "Меню:\n1. Добавить трубу\n2. Добавить КС\n3. Просмотр всех объектов\n4. Поиск\n5. Сохранить\n6. Загрузить\n0. Выход\nВыбор: ";
+        cout << "Меню:\n1. Добавить трубу\n2. Добавить КС\n3. Просмотр всех объектов\n4. Поиск\n5. Соединить КС\n6. Сохранить\n7. Загрузить\n0. Выход\nВыбор: ";
 
         int choice = Enter<int>();
         switch (choice) {
@@ -388,9 +541,12 @@ void GasNetwork::Menu() {
             Search();
             break;
         case 5:
-            SaveData();
+            NewConnection();
             break;
         case 6:
+            SaveData();
+            break;
+        case 7:
             LoadData();
             break;
         case 0:

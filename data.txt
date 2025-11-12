@@ -1,14 +1,33 @@
 #PIPE
 0
-rthgetrgh5re
+pipe1
 2
-2
+500
+0
+
+#PIPE
 1
+pipe1
+13
+700
+0
 
 #KS
 0
-tgfhgbet
+station0
+7
+5
+rr
+
+#KS
+1
+station1
 3
 2
+rr
+
+#CONNECTION
+0
 1
+0
 
